@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Home</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>KASIR POS</h1>
+            <p class="header-subtitle">Sistem Kasir Sederhana</p>
+        </header>
+
+        <!-- Menu Grid -->
+        <div class="home-menu">
+            <a href="kasir.html" class="menu-card menu-kasir">
+                <div class="menu-icon">🛒</div>
+                <div class="menu-title">KASIR</div>
+                <div class="menu-desc">Buat transaksi & cetak nota</div>
+            </a>
+
+            <a href="barang.html" class="menu-card menu-barang">
+                <div class="menu-icon">📦</div>
+                <div class="menu-title">BARANG</div>
+                <div class="menu-desc">Kelola produk & kategori</div>
+            </a>
+
+            <a href="riwayat.html" class="menu-card menu-riwayat">
+                <div class="menu-icon">📋</div>
+                <div class="menu-title">RIWAYAT</div>
+                <div class="menu-desc">Lihat & edit transaksi</div>
+            </a>
+
+            <a href="pengaturan.html" class="menu-card menu-pengaturan">
+                <div class="menu-icon">⚙️</div>
+                <div class="menu-title">PENGATURAN</div>
+                <div class="menu-desc">Kustomisasi & backup</div>
+            </a>
+
+            <a href="print-station.html" class="menu-card menu-print">
+                <div class="menu-icon">🖨️</div>
+                <div class="menu-title">PRINT STATION</div>
+                <div class="menu-desc">Antrian cetak otomatis</div>
+            </a>
+        </div>
+
+        <!-- Status -->
+        <div class="home-status">
+            <div id="api-status" class="status-item">
+                <span class="status-dot offline"></span>
+                <span>Memeriksa koneksi API...</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        // Check API connection on load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const statusEl = document.getElementById('api-status');
+            try {
+                const connected = await API.checkConnection();
+                if (connected) {
+                    statusEl.innerHTML = `
+                        <span class="status-dot online"></span>
+                        <span>API Terhubung (${API.baseURL})</span>
+                    `;
+                } else {
+                    statusEl.innerHTML = `
+                        <span class="status-dot offline"></span>
+                        <span>API Tidak Terhubung</span>
+                    `;
+                }
+            } catch (e) {
+                statusEl.innerHTML = `
+                    <span class="status-dot offline"></span>
+                    <span>API Tidak Terhubung</span>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

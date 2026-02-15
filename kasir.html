@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Transaksi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container kasir-container">
+        <!-- Fixed Header Section -->
+        <div class="kasir-fixed-header">
+            <!-- Header -->
+            <header>
+                <div class="header-row">
+                    <a href="index.html" class="btn-back">← Home</a>
+                    <h1>KASIR</h1>
+                    <div class="header-actions">
+                        <button id="btn-hold-list" class="btn btn-outline" onclick="Kasir.showHoldOrders()">
+                            Hold (<span id="hold-count">0</span>)
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading" style="display: none;">
+                Memuat data...
+            </div>
+
+            <!-- Fixed Filter Section -->
+            <div class="kasir-filters">
+                <div class="card-header">
+                    <h2>Daftar Barang</h2>
+                </div>
+                <!-- Category Filter -->
+                <div class="category-filter">
+                    <select id="kategori-filter" onchange="Kasir.filterByKategori()">
+                        <option value="">Semua Kategori</option>
+                    </select>
+                </div>
+                <!-- Search Box -->
+                <div class="search-box">
+                    <input type="text" 
+                           id="search-input" 
+                           placeholder="Cari barang (nama/kode)..."
+                           autocomplete="off">
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrollable Product Grid -->
+        <div class="kasir-scrollable">
+            <div id="product-grid" class="product-grid product-grid-full">
+                <div class="loading">Memuat barang...</div>
+            </div>
+        </div>
+
+        <!-- Fixed Bottom Button -->
+        <div class="kasir-fixed-bottom">
+            <button class="btn btn-outline btn-block" onclick="Kasir.showQuickAdd()">
+                + Tambah Barang Cepat
+            </button>
+        </div>
+
+        <!-- Floating Cart Button -->
+        <button id="btn-cart-float" class="cart-float-btn" onclick="Kasir.showCart()">
+            🛒 <span id="cart-badge" class="cart-float-badge">0</span>
+        </button>
+    </div>
+
+    <!-- Cart Modal/Panel -->
+    <div id="modal-cart" class="modal cart-modal" style="display: none;">
+        <div class="modal-content cart-modal-content">
+            <div class="modal-header">
+                <h3>Keranjang (<span id="item-count">0</span> item)</h3>
+                <button class="modal-close" onclick="Kasir.hideCart()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Customer Name -->
+                <div class="input-group mb-1">
+                    <label for="nama-pelanggan">Nama Pelanggan (opsional)</label>
+                    <input type="text" 
+                           id="nama-pelanggan" 
+                           placeholder="Untuk catatan internal..."
+                           autocomplete="off">
+                </div>
+
+                <!-- Cart Items -->
+                <div id="cart-items" class="cart-items">
+                    <div class="cart-empty">Keranjang kosong</div>
+                </div>
+
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                    <div class="summary-row total">
+                        <span>TOTAL</span>
+                        <span id="cart-total">Rp 0</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="btn-group">
+                    <button id="btn-hold" class="btn btn-outline" onclick="Kasir.holdOrder()">
+                        Hold
+                    </button>
+                    <button id="btn-print-list" class="btn btn-outline" onclick="Kasir.printItemList()">
+                        📋 List
+                    </button>
+                    <button id="btn-clear" class="btn btn-danger" onclick="Kasir.clearCart()">
+                        Batal
+                    </button>
+                    <button id="btn-bayar" class="btn btn-success btn-block" onclick="Kasir.processPayment()">
+                        LUNAS & Cetak
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Add Modal (Manual Input Only) -->
+    <div id="modal-quick-add" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Barang Cepat</h3>
+                <button class="modal-close" onclick="Kasir.hideQuickAdd()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="quick-nama" placeholder="Nama barang...">
+                </div>
+                <div class="input-group">
+                    <label>Varian (Opsional)</label>
+                    <input type="text" id="quick-varian" placeholder="Contoh: 60ml, Besar, dll...">
+                </div>
+                <div class="input-group">
+                    <label>Harga</label>
+                    <input type="number" id="quick-harga" placeholder="Harga..." min="0">
+                </div>
+                <div class="input-group">
+                    <label>Qty</label>
+                    <input type="number" id="quick-qty" value="1" min="1">
+                </div>
+                <div class="input-group">
+                    <label>Catatan (Opsional)</label>
+                    <input type="text" id="quick-catatan" placeholder="Contoh: Warna Merah, Rasa Coklat...">
+                    <p class="text-muted" style="font-size:0.8rem;">Catatan hanya tampil di cetak list barang</p>
+                </div>
+                <div class="input-group">
+                    <label>
+                        <input type="checkbox" id="quick-save"> Simpan ke database
+                    </label>
+                    <p class="text-muted" style="font-size:0.8rem;">Jika dicentang, barang akan disimpan sebagai varian baru</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideQuickAdd()">Batal</button>
+                <button class="btn btn-primary" onclick="Kasir.addQuickItem()">Tambah ke Keranjang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hold Orders Modal -->
+    <div id="modal-hold-orders" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pesanan Ditahan</h3>
+                <button class="modal-close" onclick="Kasir.hideHoldOrders()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="hold-orders-list">
+                    <div class="cart-empty">Tidak ada pesanan ditahan</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Price Modal -->
+    <div id="modal-edit-price" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Harga</h3>
+                <button class="modal-close" onclick="Kasir.hideEditPrice()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="edit-nama" readonly style="background: #f0f0f0;">
+                </div>
+                <div class="input-group">
+                    <label>Harga Baru</label>
+                    <input type="number" id="edit-harga" placeholder="Harga baru..." min="0">
+                </div>
+                <input type="hidden" id="edit-index">
+                <input type="hidden" id="edit-barang-id">
+                <input type="hidden" id="edit-varian-id">
+                <div class="input-group mt-1">
+                    <label>
+                        <input type="checkbox" id="edit-update-db"> Ubah juga di database
+                    </label>
+                    <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.25rem;">
+                        Jika dicentang, harga barang di database akan ikut berubah
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideEditPrice()">Batal</button>
+                <button class="btn btn-primary" onclick="Kasir.saveEditPrice()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Pilih Varian -->
+    <div id="modal-varian-select" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="varian-select-title">Pilih Varian</h3>
+                <button class="modal-close" onclick="Kasir.hideVarianSelection()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="varian-select-list" class="varian-list">
+                    <!-- Variant options will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Qty Selection -->
+    <div id="modal-qty-select" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="qty-select-title">Tambah ke Keranjang</h3>
+                <button class="modal-close" onclick="Kasir.hideQtySelection()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="qty-select-product">
+                    <div id="qty-select-name" class="product-name-large"></div>
+                    <div id="qty-select-price" class="product-price-large"></div>
+                </div>
+                <div class="qty-selector">
+                    <button class="qty-btn-large" onclick="Kasir.decreaseQtySelect()">−</button>
+                    <input type="number" id="qty-select-value" class="qty-input-large" value="1" min="1" onchange="Kasir.validateQtySelect()">
+                    <button class="qty-btn-large" onclick="Kasir.increaseQtySelect()">+</button>
+                </div>
+                <div id="qty-select-subtotal" class="subtotal-display"></div>
+                <div class="input-group mt-1">
+                    <label>Catatan (Opsional)</label>
+                    <input type="text" id="qty-select-catatan" placeholder="Contoh: Warna Merah, Rasa Coklat...">
+                    <p class="text-muted" style="font-size:0.8rem;">Catatan hanya tampil di cetak list barang</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideQtySelection()">Batal</button>
+                <button class="btn btn-primary" onclick="Kasir.confirmAddToCart()">Tambah ke Keranjang</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Print Method Selection -->
+    <div id="modal-print-method" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>🖨️ Cetak Nota</h3>
+                <button class="modal-close" onclick="Kasir.skipPrint()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="print-method-info" class="print-method-info"></div>
+                <p style="text-align: center; color: var(--gray-600); margin-bottom: 1rem;">Pilih metode cetak:</p>
+                <div class="print-method-options">
+                    <button class="btn-print-method" onclick="Kasir.printHere()">
+                        <span class="icon">🖨️</span>
+                        <span class="label">Cetak di Sini</span>
+                        <span class="desc">Print langsung di perangkat ini</span>
+                    </button>
+                    <button class="btn-print-method btn-print-station" onclick="Kasir.sendToPrintStation()">
+                        <span class="icon">📤</span>
+                        <span class="label">Kirim ke Print Station</span>
+                        <span class="desc">Cetak di Mini PC / komputer toko</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.skipPrint()">Lewati</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Area (Hidden, used for printing) -->
+    <div id="receipt-area"></div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/print.js"></script>
+    <script src="js/kasir.js"></script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Pengaturan</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="header-row">
+                <a href="index.html" class="btn-back">← Home</a>
+                <h1>PENGATURAN</h1>
+                <div></div>
+            </div>
+        </header>
+
+        <!-- Alert Container -->
+        <div id="alert-container"></div>
+
+        <!-- Settings Sections -->
+        <div class="settings-grid">
+            <!-- Receipt Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Kustomisasi Nota</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>Nama Toko</label>
+                        <input type="text" id="store-name" placeholder="Nama toko Anda...">
+                    </div>
+                    <div class="input-group">
+                        <label>Alamat</label>
+                        <input type="text" id="store-address" placeholder="Alamat toko...">
+                    </div>
+                    <div class="input-group">
+                        <label>Nomor Telepon</label>
+                        <input type="text" id="store-phone" placeholder="Nomor telepon...">
+                    </div>
+                    <div class="input-group">
+                        <label>Pesan Footer Nota</label>
+                        <input type="text" id="receipt-footer" placeholder="Terima kasih...">
+                    </div>
+                    <button class="btn btn-primary btn-block mt-1" onclick="Settings.saveReceipt()">
+                        Simpan Pengaturan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Price Type Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Pengaturan Harga</h2>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-1">Pilih jenis harga yang digunakan di Kasir dan Nota:</p>
+                    <div class="input-group">
+                        <label>
+                            <input type="radio" name="price-type" value="harga_utama" id="price-type-utama" checked>
+                            <strong>Harga Utama</strong> (default)
+                        </label>
+                        <p class="text-muted" style="margin-left: 1.5rem;">Menggunakan harga jual utama dari database barang</p>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="radio" name="price-type" value="harga_ecer" id="price-type-ecer">
+                            <strong>Harga Ecer</strong>
+                        </label>
+                        <p class="text-muted" style="margin-left: 1.5rem;">Menggunakan harga ecer dari database barang</p>
+                    </div>
+                    <button class="btn btn-primary btn-block mt-1" onclick="Settings.savePriceType()">
+                        Simpan Pengaturan Harga
+                    </button>
+                </div>
+            </div>
+
+            <!-- Receipt Preview -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Preview Nota</h2>
+                </div>
+                <div class="card-body">
+                    <div id="receipt-preview" class="receipt-preview">
+                        <div class="preview-header">
+                            <h3 id="preview-name">TOKO ANDA</h3>
+                            <p id="preview-address">Jl. Contoh No. 123</p>
+                            <p id="preview-phone">Telp: 08123456789</p>
+                        </div>
+                        <div class="preview-divider"></div>
+                        <div class="preview-body">
+                            <p>No: #001 - 31/12/2024 10:00</p>
+                            <div class="preview-divider"></div>
+                            <p>Aqua 600ml x2 = Rp 8.000</p>
+                            <p>Indomie x1 = Rp 3.500</p>
+                            <div class="preview-divider"></div>
+                            <p><strong>TOTAL: Rp 11.500</strong></p>
+                        </div>
+                        <div class="preview-divider"></div>
+                        <p id="preview-footer" class="preview-footer">Terima kasih!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Restore -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Backup & Restore Database</h2>
+                </div>
+                <div class="card-body">
+                    <p>File backup berisi <strong>SEMUA data</strong>: barang, kategori, transaksi, dan pengaturan.</p>
+                    
+                    <div class="backup-section">
+                        <h4>Backup (Download)</h4>
+                        <button class="btn btn-primary" onclick="Settings.backupDatabase()">
+                            Download Backup (kasir.db)
+                        </button>
+                    </div>
+                    
+                    <div class="restore-section mt-1">
+                        <h4>Restore (Upload)</h4>
+                        <p class="text-warning">⚠️ Data saat ini akan diganti dengan data dari file backup!</p>
+                        <input type="file" id="restore-file" accept=".db" style="display:none" onchange="Settings.confirmRestore(this)">
+                        <button class="btn btn-outline" onclick="document.getElementById('restore-file').click()">
+                            Pilih File Backup (.db)
+                        </button>
+                        <div id="restore-status" class="mt-1"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Settings -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Pengaturan API</h2>
+                </div>
+                <div class="card-body">
+                    <div class="input-group">
+                        <label>URL API Backend</label>
+                        <input type="text" id="api-url" placeholder="http://localhost:8000">
+                    </div>
+                    <p class="text-muted">Ubah jika backend berjalan di server lain (contoh: http://192.168.1.100:8000)</p>
+                    <button class="btn btn-outline mt-1" onclick="Settings.saveApiUrl()">
+                        Simpan URL API
+                    </button>
+                    <button class="btn btn-outline mt-1" onclick="Settings.testConnection()">
+                        Test Koneksi
+                    </button>
+                    <div id="connection-status" class="mt-1"></div>
+                </div>
+            </div>
+
+            <!-- Reset Database (DANGER ZONE) -->
+            <div class="card card-danger">
+                <div class="card-header">
+                    <h2>⚠️ Zona Berbahaya</h2>
+                </div>
+                <div class="card-body">
+                    <!-- Hapus Transaksi -->
+                    <div class="danger-section">
+                        <h4 style="color: var(--danger);">🗑️ Hapus Semua Transaksi</h4>
+                        <p class="text-muted">Menghapus semua riwayat transaksi dan pesanan ditahan.</p>
+                        <p class="text-muted">Data barang, kategori, dan pengaturan <strong>tetap aman</strong>.</p>
+                        <button class="btn btn-danger mt-1" onclick="Settings.confirmResetTransaksi()">
+                            Hapus Semua Transaksi
+                        </button>
+                    </div>
+
+                    <hr style="margin: 1.5rem 0; border-color: #fca5a5;">
+
+                    <!-- Hapus Barang -->
+                    <div class="danger-section">
+                        <h4 style="color: var(--danger);">🗑️ Hapus Semua Barang</h4>
+                        <p class="text-muted">Menghapus semua barang dan varian produk.</p>
+                        <p class="text-muted">Data transaksi dan pengaturan <strong>tetap aman</strong>.</p>
+                        <div class="input-group mt-1">
+                            <label>
+                                <input type="checkbox" id="reset-barang-kategori"> Hapus kategori juga
+                            </label>
+                        </div>
+                        <button class="btn btn-danger mt-1" onclick="Settings.confirmResetBarang()">
+                            Hapus Semua Barang
+                        </button>
+                    </div>
+
+                    <hr style="margin: 1.5rem 0; border-color: #fca5a5;">
+
+                    <!-- Reset Semua -->
+                    <div class="danger-section">
+                        <h4 style="color: var(--danger);">⚠️ Reset Semua Database</h4>
+                        <p class="text-danger"><strong>PERINGATAN:</strong> Tindakan ini akan menghapus SEMUA data secara permanen:</p>
+                        <ul style="color: var(--danger); margin-left: 1.5rem;">
+                            <li>Semua data barang dan kategori</li>
+                            <li>Semua riwayat transaksi</li>
+                            <li>Semua varian produk</li>
+                            <li>Pengaturan akan dikembalikan ke default</li>
+                        </ul>
+                        <p class="text-danger"><strong>Data yang dihapus TIDAK BISA dikembalikan!</strong></p>
+                        <button class="btn btn-danger mt-1" onclick="Settings.confirmResetDatabase()">
+                            🗑️ Reset Semua Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/pengaturan.js"></script>
+</body>
+</html>

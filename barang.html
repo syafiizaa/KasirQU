@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Kelola Barang</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container barang-container">
+        <!-- Fixed Header Section -->
+        <div class="barang-fixed-header">
+            <!-- Header -->
+            <header>
+                <div class="header-row">
+                    <a href="index.html" class="btn-back">← Home</a>
+                    <h1>KELOLA BARANG</h1>
+                    <div class="header-actions">
+                        <button class="btn btn-outline" onclick="Barang.showImportExport()">
+                            Import/Export
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="Barang.showTab('barang')">Barang</button>
+                <button class="tab-btn" onclick="Barang.showTab('kategori')">Kategori</button>
+            </div>
+        </div>
+
+        <!-- Tab Content: Barang -->
+        <div id="tab-barang" class="tab-content barang-tab-content">
+            <!-- Fixed Filter for Barang -->
+            <div class="barang-tab-fixed">
+                <div class="card-header">
+                    <div class="card-header-row">
+                        <h2>Daftar Barang <span id="barang-count" class="count-badge">(0 item)</span></h2>
+                        <button class="btn btn-primary" onclick="Barang.showAddForm()">+ Tambah</button>
+                    </div>
+                </div>
+                <!-- Filter -->
+                <div class="filter-row">
+                    <select id="filter-kategori" onchange="Barang.loadBarang()">
+                        <option value="">Semua Kategori</option>
+                    </select>
+                    <input type="text" id="search-barang" placeholder="Cari barang..." oninput="Barang.filterBarang()">
+                </div>
+            </div>
+            <!-- Scrollable Table -->
+            <div class="barang-scrollable">
+                <div class="table-container">
+                    <table id="table-barang">
+                        <thead>
+                            <tr>
+                                <th>Kode</th>
+                                <th>Nama</th>
+                                <th>Kategori</th>
+                                <th>Varian</th>
+                                <th>Harga</th>
+                                <th>Harga Ecer</th>
+                                <th>Stok</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-barang">
+                            <tr><td colspan="8" class="text-center">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Kategori -->
+        <div id="tab-kategori" class="tab-content barang-tab-content" style="display: none;">
+            <!-- Fixed Header for Kategori -->
+            <div class="barang-tab-fixed">
+                <div class="card-header">
+                    <div class="card-header-row">
+                        <h2>Daftar Kategori</h2>
+                        <button class="btn btn-primary" onclick="Barang.showAddKategori()">+ Tambah</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Scrollable Table -->
+            <div class="barang-scrollable">
+                <div class="table-container">
+                    <table id="table-kategori">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nama Kategori</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-kategori">
+                            <tr><td colspan="3" class="text-center">Memuat data...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Barang -->
+    <div id="modal-barang" class="modal" style="display: none;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="modal-barang-title">Tambah Barang</h3>
+                <button class="modal-close" onclick="Barang.hideBarangForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="barang-id">
+                <div class="input-group">
+                    <label>Kode Barang</label>
+                    <input type="text" id="barang-kode" placeholder="Contoh: BRG001">
+                </div>
+                <div class="input-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="barang-nama" placeholder="Nama barang...">
+                </div>
+                <div class="input-group">
+                    <label>Kategori</label>
+                    <select id="barang-kategori">
+                        <option value="">Pilih Kategori</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Harga (Utama)</label>
+                    <input type="number" id="barang-harga" placeholder="Harga jual utama..." min="0">
+                </div>
+                <div class="input-group">
+                    <label>Harga Ecer (Catatan Pribadi)</label>
+                    <input type="number" id="barang-harga-ecer" placeholder="Harga ecer..." min="0" value="0">
+                    <p class="text-muted">Harga ini hanya untuk catatan pribadi Anda</p>
+                </div>
+                <div class="input-group">
+                    <label>Stok</label>
+                    <input type="number" id="barang-stok" placeholder="Stok..." min="0" value="0">
+                </div>
+                
+                <!-- Variant Section (visible only when adding new product) -->
+                <div id="varian-section-add" class="varian-add-section" style="display: none;">
+                    <hr>
+                    <h4>Tambah Varian (Opsional)</h4>
+                    <p class="text-muted">Tambahkan varian jika produk ini memiliki beberapa ukuran/jenis</p>
+                    
+                    <div id="varian-list-add">
+                        <!-- Dynamic variant inputs will be added here -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline btn-sm" onclick="Barang.addVarianInput()">
+                        + Tambah Varian
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Barang.hideBarangForm()">Batal</button>
+                <button class="btn btn-primary" onclick="Barang.saveBarang()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Kategori -->
+    <div id="modal-kategori" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="modal-kategori-title">Tambah Kategori</h3>
+                <button class="modal-close" onclick="Barang.hideKategoriForm()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="kategori-id">
+                <div class="input-group">
+                    <label>Nama Kategori</label>
+                    <input type="text" id="kategori-nama" placeholder="Nama kategori...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Barang.hideKategoriForm()">Batal</button>
+                <button class="btn btn-primary" onclick="Barang.saveKategori()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Import/Export -->
+    <div id="modal-import-export" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import / Export Barang</h3>
+                <button class="modal-close" onclick="Barang.hideImportExport()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-export-section">
+                    <h4>Download Template Kosong</h4>
+                    <p>Download template dengan header saja (tanpa data)</p>
+                    <div class="btn-group">
+                        <button class="btn btn-success" onclick="Barang.downloadTemplateEmptyCSV()">CSV Kosong</button>
+                        <button class="btn btn-success" onclick="Barang.downloadTemplateEmptyExcel()">Excel Kosong</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="import-export-section">
+                    <h4>Download Template + Data</h4>
+                    <p>Download template dengan data barang yang sudah ada</p>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" onclick="Barang.downloadTemplateDataCSV()">CSV + Data</button>
+                        <button class="btn btn-outline" onclick="Barang.downloadTemplateDataExcel()">Excel + Data</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="import-export-section">
+                    <h4>Export Data</h4>
+                    <p>Download data barang lengkap dengan kolom update terakhir</p>
+                    <div class="btn-group">
+                        <button class="btn btn-outline" onclick="Barang.exportCSV()">Export CSV</button>
+                        <button class="btn btn-outline" onclick="Barang.exportExcel()">Export Excel</button>
+                    </div>
+                </div>
+                <hr>
+                <div class="import-export-section">
+                    <h4>Import Data</h4>
+                    <p>Upload file CSV atau Excel dengan kolom: kode, nama, <strong>varian</strong>, harga, harga_ecer, stok, kategori</p>
+                                        <p class="text-muted">Kosongkan kolom varian untuk produk tanpa varian. Lihat panduan di template Excel.</p>
+                    <input type="file" id="import-file" accept=".csv,.xlsx,.xls">
+                    <button class="btn btn-primary mt-1" onclick="Barang.importFile()">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Kelola Varian -->
+    <div id="modal-varian" class="modal" style="display: none;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3>Kelola Varian - <span id="varian-barang-nama"></span></h3>
+                <button class="modal-close" onclick="Barang.hideVarianModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="varian-barang-id">
+                
+                <!-- Form Tambah Varian -->
+                <div class="card mb-1">
+                    <div class="card-body">
+                        <h4>Tambah Varian Baru</h4>
+                        <div class="form-row">
+                            <div class="input-group">
+                                <label>Nama Varian</label>
+                                <input type="text" id="new-varian-nama" placeholder="Contoh: 60ml, 120ml">
+                            </div>
+                            <div class="input-group">
+                                <label>Harga</label>
+                                <input type="number" id="new-varian-harga" placeholder="Harga" min="0">
+                            </div>
+                            <div class="input-group">
+                                <label>Harga Ecer</label>
+                                <input type="number" id="new-varian-harga-ecer" placeholder="Harga Ecer" min="0" value="0">
+                            </div>
+                            <div class="input-group">
+                                <label>Stok</label>
+                                <input type="number" id="new-varian-stok" placeholder="Stok" min="0" value="0">
+                            </div>
+                            <div class="input-group">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-primary" onclick="Barang.addVarian()">+ Tambah</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Daftar Varian -->
+                <h4>Daftar Varian</h4>
+                <div class="table-container">
+                    <table id="table-varian">
+                        <thead>
+                            <tr>
+                                <th>Nama Varian</th>
+                                <th>Harga</th>
+                                <th>Harga Ecer</th>
+                                <th>Stok</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-varian">
+                            <tr><td colspan="5" class="text-center">Belum ada varian</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Barang.hideVarianModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/barang.js"></script>
+</body>
+</html>

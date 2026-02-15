@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Riwayat Transaksi</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container riwayat-container">
+        <!-- Fixed Header Section -->
+        <div class="riwayat-fixed-header">
+            <!-- Header -->
+            <header>
+                <div class="header-row">
+                    <a href="index.html" class="btn-back">← Home</a>
+                    <h1>RIWAYAT TRANSAKSI</h1>
+                    <div></div>
+                </div>
+            </header>
+
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+
+            <!-- Filters -->
+            <div class="riwayat-filters">
+                <div class="filter-grid">
+                    <div class="input-group">
+                        <label>Tanggal Mulai</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Tanggal Akhir</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    <div class="input-group">
+                        <label>Bulan</label>
+                        <select id="filter-month">
+                            <option value="">Semua</option>
+                            <option value="1">Januari</option>
+                            <option value="2">Februari</option>
+                            <option value="3">Maret</option>
+                            <option value="4">April</option>
+                            <option value="5">Mei</option>
+                            <option value="6">Juni</option>
+                            <option value="7">Juli</option>
+                            <option value="8">Agustus</option>
+                            <option value="9">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Tahun</label>
+                        <select id="filter-year">
+                            <option value="">Semua</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Nama Pelanggan</label>
+                        <input type="text" id="filter-customer" placeholder="Cari nama...">
+                    </div>
+                    <div class="input-group filter-actions">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary" onclick="Riwayat.applyFilter()">Filter</button>
+                        <button class="btn btn-outline" onclick="Riwayat.resetFilter()">Reset</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Header -->
+            <div class="riwayat-table-header">
+                <h2>Daftar Transaksi</h2>
+            </div>
+        </div>
+
+        <!-- Scrollable Transaction List -->
+        <div class="riwayat-scrollable">
+            <div class="table-container">
+                <table id="table-riwayat">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Tanggal</th>
+                            <th>Pelanggan</th>
+                            <th>Total</th>
+                            <th>Aksi</th>
+                            <th>Hapus</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-riwayat">
+                        <tr><td colspan="5" class="text-center">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: View/Edit Transaction -->
+    <div id="modal-transaksi" class="modal" style="display: none;">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h3 id="modal-transaksi-title">Detail Transaksi</h3>
+                <button class="modal-close" onclick="Riwayat.hideModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-transaksi-id">
+                
+                <div class="input-group mb-1">
+                    <label>Nama Pelanggan</label>
+                    <input type="text" id="edit-nama-pelanggan" placeholder="Nama pelanggan (opsional)">
+                </div>
+
+                <div class="table-container">
+                    <table id="table-edit-items">
+                        <thead>
+                            <tr>
+                                <th>Nama Barang</th>
+                                <th>Catatan</th>
+                                <th>Harga</th>
+                                <th>Qty</th>
+                                <th>Subtotal</th>
+                                <th>Update DB</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-edit-items">
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted" style="font-size: 0.85rem; margin-top: 0.5rem;">
+                    ℹ️ Centang "Update DB" jika ingin harga baru juga diperbarui di database barang
+                </p>
+
+                <button class="btn btn-outline btn-block mt-1" onclick="Riwayat.showAddItem()">
+                    + Tambah Barang
+                </button>
+
+                <div class="cart-summary mt-1">
+                    <div class="summary-row total">
+                        <span>TOTAL</span>
+                        <span id="edit-total">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Riwayat.hideModal()">Tutup</button>
+                <button class="btn btn-outline" onclick="Riwayat.printItemList()">📋 List</button>
+                <button class="btn btn-primary" onclick="Riwayat.printReceipt()">Cetak Ulang</button>
+                <button class="btn btn-success" onclick="Riwayat.saveEdit()">Simpan & Cetak</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Item Modal -->
+    <div id="modal-add-item" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Tambah Barang</h3>
+                <button class="modal-close" onclick="Riwayat.hideAddItem()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Tabs -->
+                <div class="quick-add-tabs">
+                    <button class="tab-btn active" onclick="Riwayat.switchAddItemTab('select')" id="riwayat-tab-select">Pilih dari Database</button>
+                    <button class="tab-btn" onclick="Riwayat.switchAddItemTab('manual')" id="riwayat-tab-manual">Input Manual</button>
+                </div>
+
+                <!-- Tab: Select from Database -->
+                <div id="riwayat-tab-content-select" class="quick-tab-content">
+                    <div class="input-group">
+                        <label>Cari Barang</label>
+                        <input type="text" id="riwayat-add-search" placeholder="Ketik nama barang..." oninput="Riwayat.searchAddItem(this.value)">
+                    </div>
+                    <div id="riwayat-product-list" class="quick-product-list">
+                        <!-- Products will be loaded here -->
+                    </div>
+                    <div class="input-group mt-1">
+                        <label>Qty</label>
+                        <input type="number" id="riwayat-add-select-qty" value="1" min="1">
+                    </div>
+                </div>
+
+                <!-- Tab: Manual Input -->
+                <div id="riwayat-tab-content-manual" class="quick-tab-content" style="display: none;">
+                    <div class="input-group">
+                        <label>Nama Barang</label>
+                        <input type="text" id="riwayat-add-nama" placeholder="Nama barang...">
+                    </div>
+                    <div class="input-group">
+                        <label>Varian (Opsional)</label>
+                        <input type="text" id="riwayat-add-varian" placeholder="Contoh: 60ml, Besar, dll...">
+                    </div>
+                    <div class="input-group">
+                        <label>Harga</label>
+                        <input type="number" id="riwayat-add-harga" placeholder="Harga..." min="0">
+                    </div>
+                    <div class="input-group">
+                        <label>Qty</label>
+                        <input type="number" id="riwayat-add-qty" value="1" min="1">
+                    </div>
+                    <div class="input-group">
+                        <label>Catatan (Opsional)</label>
+                        <input type="text" id="riwayat-add-catatan" placeholder="Contoh: Warna Merah, Rasa Coklat...">
+                        <p class="text-muted" style="font-size:0.8rem;">Catatan hanya tampil di cetak list barang</p>
+                    </div>
+                    <div class="input-group">
+                        <label>
+                            <input type="checkbox" id="riwayat-add-save"> Simpan ke database
+                        </label>
+                        <p class="text-muted" style="font-size:0.8rem;">Jika dicentang, barang akan disimpan sebagai varian baru</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Riwayat.hideAddItem()">Batal</button>
+                <button class="btn btn-primary" onclick="Riwayat.confirmAddItem()">Tambah</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Area (Hidden, used for printing) -->
+    <div id="receipt-area"></div>
+
+    <!-- Variant Selection Modal -->
+    <div id="modal-riwayat-varian" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3 id="riwayat-varian-title">Pilih Varian</h3>
+                <button class="modal-close" onclick="Riwayat.hideVarianSelection()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="riwayat-varian-list" class="varian-list">
+                    <!-- Variant options will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Print Method Selection -->
+    <div id="modal-print-method" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>🖨️ Cetak Nota</h3>
+                <button class="modal-close" onclick="Riwayat.skipPrint()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="print-method-info" class="print-method-info"></div>
+                <p style="text-align: center; color: var(--gray-600); margin-bottom: 1rem;">Pilih metode cetak:</p>
+                <div class="print-method-options">
+                    <button class="btn-print-method" onclick="Riwayat.printHere()">
+                        <span class="icon">🖨️</span>
+                        <span class="label">Cetak di Sini</span>
+                        <span class="desc">Print langsung di perangkat ini</span>
+                    </button>
+                    <button class="btn-print-method btn-print-station" onclick="Riwayat.sendToPrintStation()">
+                        <span class="icon">📤</span>
+                        <span class="label">Kirim ke Print Station</span>
+                        <span class="desc">Cetak di Mini PC / komputer toko</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Riwayat.skipPrint()">Lewati</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="js/api.js"></script>
+    <script src="js/print.js"></script>
+    <script src="js/riwayat.js"></script>
+</body>
+</html>
