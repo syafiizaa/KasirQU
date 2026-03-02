@@ -5,6 +5,8 @@
  */
 
 const PrintHelper = {
+    // Max characters per line for 58mm (48mm printable area)
+    MAX_CHARS_PER_LINE: 28,
     // Store info - will be loaded from settings
     storeName: 'TOKO ANDA',
     storeAddress: 'Jl. Contoh No. 123',
@@ -168,6 +170,42 @@ const PrintHelper = {
     },
 
     /**
+     * Wrap text to fit within max characters per line
+     * @param {string} text - Text to wrap
+     * @param {number} maxChars - Maximum characters per line
+     * @returns {string} - Wrapped text with line breaks
+     */
+    wrapText(text, maxChars = this.MAX_CHARS_PER_LINE) {
+        if (!text || text.length <= maxChars) return text;
+        
+        const words = text.split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (const word of words) {
+            if (currentLine.length + word.length + 1 <= maxChars) {
+                currentLine += (currentLine ? ' ' : '') + word;
+            } else {
+                if (currentLine) lines.push(currentLine);
+                // If single word is longer than maxChars, break it
+                if (word.length > maxChars) {
+                    let remaining = word;
+                    while (remaining.length > maxChars) {
+                        lines.push(remaining.substring(0, maxChars));
+                        remaining = remaining.substring(maxChars);
+                    }
+                    currentLine = remaining;
+                } else {
+                    currentLine = word;
+                }
+            }
+        }
+        if (currentLine) lines.push(currentLine);
+        
+        return lines.join('<br>');
+    },
+
+    /**
      * Generate Item List HTML (without prices) for packing/check list
      * Shows: item name, qty, and catatan (notes)
      * @param {Object} data - { nama_pelanggan, items: [{nama_barang, qty, catatan}], tanggal }
@@ -182,7 +220,7 @@ const PrintHelper = {
         
         // Inline styles - same as main receipt for consistency
         const styles = {
-            container: 'width:48mm;max-width:48mm;font-family:Courier New,monospace;font-size:12px;font-weight:bold;line-height:1.0;color:#000;background:#fff;padding:0;',
+            container: 'width:48mm;max-width:48mm;font-family:Courier New,monospace;font-size:12px;font-weight:bold;line-height:1.2;color:#000;background:#fff;padding:0;',
             header: 'text-align:center;margin-bottom:0;padding-bottom:0;border-bottom:1px dashed #000;',
             listTitle: 'font-size:16px;font-weight:bold;margin:0;',
             storeInfo: 'font-size:13px;font-weight:bold;margin:0;',
@@ -192,7 +230,7 @@ const PrintHelper = {
             itemRow: 'display:flex;align-items:flex-start;font-size:14px;font-weight:bold;',
             itemQty: 'min-width:30px;text-align:left;',
             itemName: 'flex:1;word-wrap:break-word;white-space:normal;padding-left:2mm;',
-            itemNote: 'font-size:12px;color:#000;padding-left:32px;font-style:italic;margin-top:0;',
+            itemNote: 'font-size:12px;color:#000;padding-left:32px;font-style:normal;margin-top:1mm;word-wrap:break-word;white-space:normal;line-height:1.3;',
             footer: 'text-align:center;margin-top:1mm;padding-top:0;font-size:11px;font-weight:bold;'
         };
 
@@ -202,8 +240,10 @@ const PrintHelper = {
         
         let itemsHTML = items.map((item, index) => {
             const itemName = item.nama_barang.replace(' - ', ' ');
-            const noteHtml = item.catatan 
-                ? `<div style="${styles.itemNote}">→ ${item.catatan}</div>` 
+            // Wrap catatan text to prevent overflow
+            const wrappedNote = item.catatan ? this.wrapText(item.catatan, 24) : '';
+            const noteHtml = wrappedNote 
+                ? `<div style="${styles.itemNote}">→ ${wrappedNote}</div>` 
                 : '';
             
             return `

@@ -1513,6 +1513,21 @@ tr:hover td {
     border: 1px solid var(--gray-300);
     border-radius: 6px;
     font-size: 0.9rem;
+    max-height: 200px;
+}
+
+/* Fix for filter-row select dropdown scroll */
+.filter-row select {
+    max-height: 40px;
+}
+
+.filter-row select option {
+    padding: 0.5rem;
+}
+
+/* Make sure select dropdowns have scroll */
+select {
+    overflow-y: auto;
 }
 
 .input-group select {
@@ -1734,6 +1749,38 @@ hr {
 
 .qty-input-large[type=number] {
     -moz-appearance: textfield;
+}
+
+/* ============================================
+   CART ITEM CATATAN EDIT
+   ============================================ */
+
+.cart-item-catatan-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.15rem;
+}
+
+.cart-item-catatan {
+    font-size: 0.75rem;
+    color: var(--secondary);
+    font-style: italic;
+}
+
+.btn-edit-catatan {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 0.1rem 0.25rem;
+    border-radius: 3px;
+    opacity: 0.6;
+}
+
+.btn-edit-catatan:hover {
+    background: var(--gray-100);
+    opacity: 1;
 }
 
 /* ============================================

@@ -281,10 +281,87 @@
                         <span class="label">Kirim ke Print Station</span>
                         <span class="desc">Cetak di Mini PC / komputer toko</span>
                     </button>
+                    <button class="btn-print-method btn-share-wa" onclick="Kasir.shareReceiptToWhatsApp()" style="border-color: #25D366; background: rgba(37, 211, 102, 0.05);">
+                        <span class="icon">📩</span>
+                        <span class="label">Unduh untuk WhatsApp</span>
+                        <span class="desc">Download gambar nota JPG</span>
+                    </button>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" onclick="Kasir.skipPrint()">Lewati</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Print List Method Selection -->
+    <div id="modal-print-list-method" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>📋 Cetak List Barang</h3>
+                <button class="modal-close" onclick="Kasir.hideItemListPrintMethodDialog()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; color: var(--gray-600); margin-bottom: 1rem;">Pilih metode cetak:</p>
+                <div class="print-method-options">
+                    <button class="btn-print-method" onclick="Kasir.printItemListHere()">
+                        <span class="icon">🖨️</span>
+                        <span class="label">Cetak di Sini</span>
+                        <span class="desc">Print langsung di perangkat ini</span>
+                    </button>
+                    <button class="btn-print-method btn-print-station" onclick="Kasir.sendItemListToPrintStation()">
+                        <span class="icon">📤</span>
+                        <span class="label">Kirim ke Print Station</span>
+                        <span class="desc">Cetak di Mini PC / komputer toko</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideItemListPrintMethodDialog()">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Clear Cart -->
+    <div id="modal-confirm-clear" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>⚠️ Konfirmasi</h3>
+                <button class="modal-close" onclick="Kasir.hideClearCartConfirmation()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; margin-bottom: 1rem;">Yakin ingin menghapus semua barang di keranjang?</p>
+                <p style="text-align: center; color: var(--danger); font-size: 0.9rem;">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideClearCartConfirmation()">Batal</button>
+                <button class="btn btn-danger" onclick="Kasir.confirmClearCart()">Ya, Hapus Semua</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Edit Catatan -->
+    <div id="modal-edit-catatan" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>📝 Edit Catatan</h3>
+                <button class="modal-close" onclick="Kasir.hideEditCatatan()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Nama Barang</label>
+                    <input type="text" id="edit-catatan-nama" readonly style="background: #f0f0f0;">
+                </div>
+                <div class="input-group">
+                    <label>Catatan</label>
+                    <textarea id="edit-catatan-value" rows="3" placeholder="Contoh: Warna Merah, Rasa Coklat, Ukuran XL..." style="width: 100%; padding: 0.75rem; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 1rem; resize: vertical;"></textarea>
+                    <p class="text-muted" style="font-size: 0.8rem; margin-top: 0.25rem;">Catatan hanya tampil di cetak list barang</p>
+                </div>
+                <input type="hidden" id="edit-catatan-index">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Kasir.hideEditCatatan()">Batal</button>
+                <button class="btn btn-primary" onclick="Kasir.saveEditCatatan()">Simpan</button>
             </div>
         </div>
     </div>

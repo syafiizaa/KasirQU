@@ -275,6 +275,13 @@ const API = {
         });
     },
 
+    async addItemListToPrintQueue(itemListData) {
+        return await this.request('/api/settings/print-queue/item-list', {
+            method: 'POST',
+            body: itemListData,
+        });
+    },
+
     async removeFromPrintQueue(queueId) {
         return await this.request(`/api/settings/print-queue/${queueId}`, {
             method: 'DELETE',

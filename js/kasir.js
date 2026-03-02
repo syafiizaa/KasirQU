@@ -18,6 +18,10 @@ const Kasir = {
     
     // Print state
     lastTransaction: null,
+    
+    // LocalStorage keys
+    CART_STORAGE_KEY: 'kasir_cart',
+    CUSTOMER_STORAGE_KEY: 'kasir_customer',
 
     /**
      * Initialize the kasir application
@@ -27,6 +31,9 @@ const Kasir = {
         
         // Load settings for PrintHelper
         await this.loadSettings();
+        
+        // Restore cart from localStorage
+        this.restoreCart();
         
         // Setup event listeners
         this.setupEventListeners();
@@ -40,6 +47,53 @@ const Kasir = {
         this.updateCartDisplay();
         
         console.log('Kasir POS ready!');
+    },
+
+    /**
+     * Save cart to localStorage
+     */
+    saveCart() {
+        try {
+            localStorage.setItem(this.CART_STORAGE_KEY, JSON.stringify(this.cart));
+            const namaPelanggan = document.getElementById('nama-pelanggan')?.value || '';
+            localStorage.setItem(this.CUSTOMER_STORAGE_KEY, namaPelanggan);
+        } catch (e) {
+            console.log('Could not save cart to localStorage');
+        }
+    },
+
+    /**
+     * Restore cart from localStorage
+     */
+    restoreCart() {
+        try {
+            const savedCart = localStorage.getItem(this.CART_STORAGE_KEY);
+            if (savedCart) {
+                this.cart = JSON.parse(savedCart);
+            }
+            const savedCustomer = localStorage.getItem(this.CUSTOMER_STORAGE_KEY);
+            if (savedCustomer) {
+                const namaPelangganInput = document.getElementById('nama-pelanggan');
+                if (namaPelangganInput) {
+                    namaPelangganInput.value = savedCustomer;
+                }
+            }
+        } catch (e) {
+            console.log('Could not restore cart from localStorage');
+            this.cart = [];
+        }
+    },
+
+    /**
+     * Clear cart from localStorage
+     */
+    clearCartStorage() {
+        try {
+            localStorage.removeItem(this.CART_STORAGE_KEY);
+            localStorage.removeItem(this.CUSTOMER_STORAGE_KEY);
+        } catch (e) {
+            console.log('Could not clear cart from localStorage');
+        }
     },
 
     /**
@@ -465,6 +519,7 @@ const Kasir = {
         }
 
         this.updateCartDisplay();
+        this.saveCart();
     },
 
     /**
@@ -484,6 +539,7 @@ const Kasir = {
         item.qty = newQty;
         item.subtotal = item.qty * item.harga;
         this.updateCartDisplay();
+        this.saveCart();
     },
 
     /**
@@ -492,17 +548,56 @@ const Kasir = {
     removeFromCart(index) {
         this.cart.splice(index, 1);
         this.updateCartDisplay();
+        this.saveCart();
     },
 
     /**
-     * Clear entire cart
+     * Clear entire cart with confirmation
      */
-    clearCart() {
+    clearCart(skipConfirmation = false) {
+        // Show confirmation dialog if cart is not empty and not skipping
+        if (!skipConfirmation && this.cart.length > 0) {
+            this.showClearCartConfirmation();
+            return;
+        }
+        
         this.cart = [];
         const namaPelanggan = document.getElementById('nama-pelanggan');
         if (namaPelanggan) namaPelanggan.value = '';
         this.updateCartDisplay();
+        this.clearCartStorage();
         this.hideCart();
+    },
+
+    /**
+     * Show confirmation dialog before clearing cart
+     */
+    showClearCartConfirmation() {
+        const modal = document.getElementById('modal-confirm-clear');
+        if (modal) {
+            modal.style.display = 'flex';
+        } else {
+            // Fallback to native confirm
+            if (confirm('Yakin ingin menghapus semua barang di keranjang?')) {
+                this.clearCart(true);
+            }
+        }
+    },
+
+    /**
+     * Hide clear cart confirmation modal
+     */
+    hideClearCartConfirmation() {
+        const modal = document.getElementById('modal-confirm-clear');
+        if (modal) modal.style.display = 'none';
+    },
+
+    /**
+     * Confirm clear cart from modal
+     */
+    confirmClearCart() {
+        this.hideClearCartConfirmation();
+        this.clearCart(true);
     },
 
     /**
@@ -529,7 +624,10 @@ const Kasir = {
                 <div class="cart-item">
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.nama_barang}</div>
-                        ${item.catatan ? `<div class="cart-item-catatan">📝 ${item.catatan}</div>` : ''}
+                        <div class="cart-item-catatan-row">
+                            ${item.catatan ? `<span class="cart-item-catatan">📝 ${item.catatan}</span>` : ''}
+                            <button class="btn-edit-catatan" onclick="Kasir.showEditCatatan(${index})" title="${item.catatan ? 'Edit' : 'Tambah'} Catatan">✏️</button>
+                        </div>
                         <div class="cart-item-price">
                             ${this.formatRupiah(item.harga)}
                             <button class="btn-edit-price" onclick="Kasir.showEditPrice(${index})" title="Edit Harga">✏</button>
@@ -606,7 +704,11 @@ const Kasir = {
 
             // Success - clear cart and reload products
             this.showSuccess('Transaksi berhasil!');
-            this.clearCart();
+            this.cart = [];
+            const customerInput = document.getElementById('nama-pelanggan');
+            if (customerInput) customerInput.value = '';
+            this.updateCartDisplay();
+            this.clearCartStorage();
             await this.loadProducts();
 
         } catch (error) {
@@ -688,6 +790,123 @@ const Kasir = {
         this.lastTransaction = null;
     },
 
+    // ==========================================
+    // Share Receipt to WhatsApp as JPG
+    // ==========================================
+
+    /**
+     * Share receipt to WhatsApp as JPG image
+     */
+    async shareReceiptToWhatsApp() {
+        if (!this.lastTransaction) {
+            this.showError('Tidak ada transaksi untuk dibagikan');
+            return;
+        }
+
+        this.showLoading(true);
+
+        try {
+            // Generate receipt HTML
+            const receiptArea = document.getElementById('receipt-area');
+            receiptArea.innerHTML = PrintHelper.generateReceiptHTML(this.lastTransaction);
+            receiptArea.style.display = 'block';
+            receiptArea.style.position = 'fixed';
+            receiptArea.style.left = '-9999px';
+            receiptArea.style.background = 'white';
+            receiptArea.style.padding = '10px';
+
+            // Wait for content to render
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Check if html2canvas is loaded
+            if (typeof html2canvas === 'undefined') {
+                // Load html2canvas dynamically
+                await this.loadHtml2Canvas();
+            }
+
+            // Get the receipt container
+            const receiptContent = receiptArea.querySelector('div');
+            if (!receiptContent) {
+                throw new Error('Receipt content not found');
+            }
+
+            // Calculate max height per page (58mm width, ~80mm per page for readability)
+            const maxHeightPerPage = 400; // pixels
+            const totalHeight = receiptContent.offsetHeight;
+            const pages = Math.ceil(totalHeight / maxHeightPerPage);
+
+            // Generate images
+            const images = [];
+            
+            if (pages <= 1 || totalHeight <= maxHeightPerPage) {
+                // Single page - capture entire receipt
+                const canvas = await html2canvas(receiptContent, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true
+                });
+                images.push(canvas.toDataURL('image/jpeg', 0.9));
+            } else {
+                // Multiple pages - capture in sections
+                for (let i = 0; i < pages; i++) {
+                    const canvas = await html2canvas(receiptContent, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        useCORS: true,
+                        y: i * maxHeightPerPage,
+                        height: Math.min(maxHeightPerPage, totalHeight - (i * maxHeightPerPage)),
+                        windowHeight: maxHeightPerPage
+                    });
+                    images.push(canvas.toDataURL('image/jpeg', 0.9));
+                }
+            }
+
+            // Hide receipt area
+            receiptArea.style.display = 'none';
+
+            // Download images
+            for (let i = 0; i < images.length; i++) {
+                const link = document.createElement('a');
+                link.download = `nota_${this.lastTransaction.id}${pages > 1 ? `_hal${i+1}` : ''}.jpg`;
+                link.href = images[i];
+                link.click();
+                
+                // Small delay between downloads
+                if (i < images.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            this.showSuccess(`Nota berhasil diunduh! ${pages > 1 ? `(${pages} halaman)` : ''} Silakan bagikan melalui WhatsApp.`);
+
+        } catch (error) {
+            console.error('Share error:', error);
+            this.showError('Gagal membuat gambar nota: ' + error.message);
+        }
+
+        this.showLoading(false);
+    },
+
+    /**
+     * Load html2canvas library dynamically
+     */
+    loadHtml2Canvas() {
+        return new Promise((resolve, reject) => {
+            if (typeof html2canvas !== 'undefined') {
+                resolve();
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Gagal memuat library html2canvas'));
+            document.head.appendChild(script);
+        });
+    },
+
     /**
      * Print item list (without prices) from cart
      */
@@ -697,6 +916,37 @@ const Kasir = {
             return;
         }
 
+        // Show print method selection for item list
+        this.showItemListPrintMethodDialog();
+    },
+
+    /**
+     * Show print method selection dialog for item list
+     */
+    showItemListPrintMethodDialog() {
+        const modal = document.getElementById('modal-print-list-method');
+        if (!modal) {
+            // Fallback: print directly if modal doesn't exist
+            this.printItemListHere();
+            return;
+        }
+        modal.style.display = 'flex';
+    },
+
+    /**
+     * Hide print list method dialog
+     */
+    hideItemListPrintMethodDialog() {
+        const modal = document.getElementById('modal-print-list-method');
+        if (modal) modal.style.display = 'none';
+    },
+
+    /**
+     * Print item list here (current browser)
+     */
+    async printItemListHere() {
+        this.hideItemListPrintMethodDialog();
+        
         try {
             const settings = await API.getSettings();
             const namaPelanggan = document.getElementById('nama-pelanggan')?.value || null;
@@ -723,6 +973,75 @@ const Kasir = {
         } catch (error) {
             this.showError('Gagal mencetak list: ' + error.message);
         }
+    },
+
+    /**
+     * Send item list to Print Station
+     */
+    async sendItemListToPrintStation() {
+        this.hideItemListPrintMethodDialog();
+        
+        if (this.cart.length === 0) {
+            this.showError('Keranjang kosong!');
+            return;
+        }
+        
+        try {
+            const namaPelanggan = document.getElementById('nama-pelanggan')?.value || null;
+            
+            // Build item list data
+            const itemListData = {
+                nama_pelanggan: namaPelanggan,
+                items: this.cart.map(item => ({
+                    nama_barang: item.nama_barang,
+                    qty: item.qty,
+                    catatan: item.catatan || null
+                })),
+                created_at: new Date().toISOString(),
+                total_items: this.cart.reduce((sum, item) => sum + item.qty, 0)
+            };
+            
+            // Send to print queue as item list type
+            await API.addItemListToPrintQueue(itemListData);
+            this.showSuccess('List barang dikirim ke Print Station!');
+        } catch (error) {
+            this.showError('Gagal mengirim ke Print Station: ' + error.message);
+        }
+    },
+
+    // ==========================================
+    // Edit Catatan Feature
+    // ==========================================
+
+    showEditCatatan(index) {
+        const item = this.cart[index];
+        if (!item) return;
+
+        document.getElementById('edit-catatan-nama').value = item.nama_barang;
+        document.getElementById('edit-catatan-value').value = item.catatan || '';
+        document.getElementById('edit-catatan-index').value = index;
+        
+        document.getElementById('modal-edit-catatan').style.display = 'flex';
+        document.getElementById('edit-catatan-value').focus();
+    },
+
+    hideEditCatatan() {
+        document.getElementById('modal-edit-catatan').style.display = 'none';
+    },
+
+    saveEditCatatan() {
+        const index = parseInt(document.getElementById('edit-catatan-index').value);
+        const newCatatan = document.getElementById('edit-catatan-value').value.trim();
+
+        const item = this.cart[index];
+        if (!item) return;
+
+        item.catatan = newCatatan || null;
+
+        this.updateCartDisplay();
+        this.saveCart();
+        this.hideEditCatatan();
+        this.showSuccess('Catatan diperbarui!');
     },
 
     // ==========================================

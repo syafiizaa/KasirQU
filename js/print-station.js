@@ -165,7 +165,7 @@ const PrintStation = {
                     <div class="icon">✅</div>
                     <p>Tidak ada antrian cetak</p>
                     <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--gray-400);">
-                        Kirim transaksi dari HP untuk mencetak di sini
+                        Kirim transaksi atau list barang dari HP untuk mencetak di sini
                     </p>
                 </div>
             `;
@@ -173,26 +173,57 @@ const PrintStation = {
         }
 
         queueList.innerHTML = this.queue.map((item, index) => {
-            const dateTime = this.formatDateTime(item.transaksi_date);
-            const queuedAt = this.formatDateTime(item.queued_at);
             const isFirst = index === 0;
-
-            return `
-                <div class="queue-item ${isFirst ? 'first' : ''}">
-                    <div class="queue-item-info">
-                        <h3>#${item.transaksi_id}</h3>
-                        <div class="meta">${dateTime}</div>
-                        ${item.nama_pelanggan ? `<div class="customer">👤 ${item.nama_pelanggan}</div>` : ''}
-                        <div class="queued-at" style="font-size: 0.75rem; color: var(--gray-400);">
-                            Dikirim: ${queuedAt}
+            const isItemList = item.queue_type === 'item_list';
+            
+            if (isItemList) {
+                // Item list type
+                let itemListData = {};
+                try {
+                    itemListData = JSON.parse(item.item_list_data || '{}');
+                } catch (e) {
+                    itemListData = {};
+                }
+                const queuedAt = this.formatDateTime(item.queued_at);
+                const totalItems = itemListData.total_items || 0;
+                
+                return `
+                    <div class="queue-item ${isFirst ? 'first' : ''} item-list-queue">
+                        <div class="queue-item-info">
+                            <h3>📋 LIST BARANG</h3>
+                            <div class="meta">${totalItems} item</div>
+                            ${itemListData.nama_pelanggan ? `<div class="customer">👤 ${itemListData.nama_pelanggan}</div>` : ''}
+                            <div class="queued-at" style="font-size: 0.75rem; color: var(--gray-400);">
+                                Dikirim: ${queuedAt}
+                            </div>
                         </div>
+                        <button class="btn-print btn-print-list" onclick="PrintStation.printItemList(${item.id})">
+                            🖨️ CETAK
+                        </button>
                     </div>
-                    <div class="queue-item-total">${this.formatRupiah(item.total)}</div>
-                    <button class="btn-print" onclick="PrintStation.printTransaction(${item.id}, ${item.transaksi_id})">
-                        🖨️ CETAK
-                    </button>
-                </div>
-            `;
+                `;
+            } else {
+                // Transaction type
+                const dateTime = this.formatDateTime(item.transaksi_date);
+                const queuedAt = this.formatDateTime(item.queued_at);
+
+                return `
+                    <div class="queue-item ${isFirst ? 'first' : ''}">
+                        <div class="queue-item-info">
+                            <h3>#${item.transaksi_id}</h3>
+                            <div class="meta">${dateTime}</div>
+                            ${item.nama_pelanggan ? `<div class="customer">👤 ${item.nama_pelanggan}</div>` : ''}
+                            <div class="queued-at" style="font-size: 0.75rem; color: var(--gray-400);">
+                                Dikirim: ${queuedAt}
+                            </div>
+                        </div>
+                        <div class="queue-item-total">${this.formatRupiah(item.total)}</div>
+                        <button class="btn-print" onclick="PrintStation.printTransaction(${item.id}, ${item.transaksi_id})">
+                            🖨️ CETAK
+                        </button>
+                    </div>
+                `;
+            }
         }).join('');
     },
 
@@ -213,7 +244,8 @@ const PrintStation = {
             this.lastPrintedInfo = {
                 id: transaksiId,
                 total: transaction.total,
-                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                type: 'transaksi'
             };
             this.updateLastPrintedDisplay();
 
@@ -238,12 +270,70 @@ const PrintStation = {
     },
 
     /**
+     * Print an item list
+     * @param {number} queueId - The queue item ID (for removal)
+     */
+    async printItemList(queueId) {
+        try {
+            // Find the queue item
+            const queueItem = this.queue.find(item => item.id === queueId);
+            if (!queueItem || !queueItem.item_list_data) {
+                alert('Data list barang tidak ditemukan');
+                return;
+            }
+
+            // Parse item list data
+            const itemListData = JSON.parse(queueItem.item_list_data);
+
+            // Remove from queue BEFORE showing print dialog
+            await API.removeFromPrintQueue(queueId);
+
+            // Update last printed info
+            this.lastPrintedInfo = {
+                id: queueId,
+                total: itemListData.total_items || 0,
+                time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                type: 'item_list'
+            };
+            this.updateLastPrintedDisplay();
+
+            // Remove from local queue immediately
+            this.queue = this.queue.filter(item => item.id !== queueId);
+            this.renderQueue();
+
+            // Get settings for printing
+            const settings = await API.getSettings();
+
+            // Print using PrintHelper
+            if (typeof PrintHelper !== 'undefined') {
+                const printHtml = PrintHelper.generateItemListHTML(itemListData, settings);
+                const receiptArea = document.getElementById('receipt-area');
+                receiptArea.innerHTML = printHtml;
+                window.print();
+            }
+
+            // Refresh queue after a short delay
+            setTimeout(() => {
+                this.checkPrintQueue();
+            }, 500);
+
+        } catch (error) {
+            console.error('Print error:', error);
+            alert('Gagal mencetak list: ' + error.message);
+        }
+    },
+
+    /**
      * Update last printed display
      */
     updateLastPrintedDisplay() {
         const el = document.getElementById('last-printed-info');
         if (this.lastPrintedInfo) {
-            el.textContent = `#${this.lastPrintedInfo.id} - ${this.formatRupiah(this.lastPrintedInfo.total)} (${this.lastPrintedInfo.time})`;
+            if (this.lastPrintedInfo.type === 'item_list') {
+                el.textContent = `📋 List Barang (${this.lastPrintedInfo.total} item) - ${this.lastPrintedInfo.time}`;
+            } else {
+                el.textContent = `#${this.lastPrintedInfo.id} - ${this.formatRupiah(this.lastPrintedInfo.total)} (${this.lastPrintedInfo.time})`;
+            }
         } else {
             el.textContent = 'Belum ada';
         }
