@@ -969,10 +969,14 @@ const Kasir = {
                 total_items: this.cart.reduce((sum, item) => sum + item.qty, 0)
             };
             
+            console.log('Sending item list to print queue:', itemListData);
+            
             // Send to print queue as item list type
-            await API.addItemListToPrintQueue(itemListData);
+            const result = await API.addItemListToPrintQueue(itemListData);
+            console.log('Print queue result:', result);
             this.showSuccess('List barang dikirim ke Print Station!');
         } catch (error) {
+            console.error('Error sending to print queue:', error);
             this.showError('Gagal mengirim ke Print Station: ' + error.message);
         }
     },

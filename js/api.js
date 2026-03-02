@@ -276,10 +276,13 @@ const API = {
     },
 
     async addItemListToPrintQueue(itemListData) {
-        return await this.request('/api/settings/print-queue/item-list', {
+        console.log('API: addItemListToPrintQueue called with:', itemListData);
+        const result = await this.request('/api/settings/print-queue/item-list', {
             method: 'POST',
             body: itemListData,
         });
+        console.log('API: addItemListToPrintQueue response:', result);
+        return result;
     },
 
     async removeFromPrintQueue(queueId) {
