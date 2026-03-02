@@ -1513,12 +1513,11 @@ tr:hover td {
     border: 1px solid var(--gray-300);
     border-radius: 6px;
     font-size: 0.9rem;
-    max-height: 200px;
 }
 
 /* Fix for filter-row select dropdown scroll */
 .filter-row select {
-    max-height: 40px;
+    min-height: 40px;
 }
 
 .filter-row select option {
@@ -1528,6 +1527,22 @@ tr:hover td {
 /* Make sure select dropdowns have scroll */
 select {
     overflow-y: auto;
+}
+
+/* Mobile: ensure native select picker shows all options */
+@media (max-width: 768px) {
+    .filter-row select,
+    .category-filter select,
+    .input-group select {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 12px;
+        padding-right: 2.5rem;
+    }
 }
 
 .input-group select {

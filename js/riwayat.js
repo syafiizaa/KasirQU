@@ -602,9 +602,36 @@ const Riwayat = {
     },
 
     /**
-     * Print item list (without prices) from current edited items
+     * Show print list method selection modal
      */
-    async printItemList() {
+    showItemListPrintMethod() {
+        if (this.editItems.length === 0) {
+            this.showError('Tidak ada item!');
+            return;
+        }
+        const modal = document.getElementById('modal-print-list-method');
+        if (modal) {
+            modal.style.display = 'flex';
+        } else {
+            // Fallback: print directly
+            this.printItemListHere();
+        }
+    },
+
+    /**
+     * Hide print list method modal
+     */
+    hideItemListPrintMethod() {
+        const modal = document.getElementById('modal-print-list-method');
+        if (modal) modal.style.display = 'none';
+    },
+
+    /**
+     * Print item list here (current browser)
+     */
+    async printItemListHere() {
+        this.hideItemListPrintMethod();
+        
         if (this.editItems.length === 0) {
             this.showError('Tidak ada item!');
             return;
@@ -635,6 +662,40 @@ const Riwayat = {
             this.showSuccess('List barang dicetak!');
         } catch (error) {
             this.showError('Gagal mencetak list: ' + error.message);
+        }
+    },
+
+    /**
+     * Send item list to Print Station
+     */
+    async sendItemListToPrintStation() {
+        this.hideItemListPrintMethod();
+        
+        if (this.editItems.length === 0) {
+            this.showError('Tidak ada item!');
+            return;
+        }
+        
+        try {
+            const namaPelanggan = document.getElementById('edit-nama-pelanggan')?.value || null;
+            
+            // Build item list data
+            const itemListData = {
+                nama_pelanggan: namaPelanggan,
+                items: this.editItems.map(item => ({
+                    nama_barang: item.nama_barang,
+                    qty: item.qty,
+                    catatan: item.catatan || null
+                })),
+                created_at: this.currentTransaction?.created_at || new Date().toISOString(),
+                total_items: this.editItems.reduce((sum, item) => sum + item.qty, 0)
+            };
+            
+            // Send to print queue as item list type
+            await API.addItemListToPrintQueue(itemListData);
+            this.showSuccess('List barang dikirim ke Print Station!');
+        } catch (error) {
+            this.showError('Gagal mengirim ke Print Station: ' + error.message);
         }
     },
 
@@ -693,6 +754,113 @@ const Riwayat = {
     skipPrint() {
         this.hidePrintMethodDialog();
         this.lastPrintTransaction = null;
+    },
+
+    // ==========================================
+    // Share to WhatsApp
+    // ==========================================
+
+    /**
+     * Share receipt to WhatsApp as JPG image
+     */
+    async shareToWhatsApp() {
+        if (!this.currentTransaction) {
+            this.showError('Tidak ada transaksi untuk dibagikan');
+            return;
+        }
+
+        // Update transaction data with edited items
+        const transactionData = {
+            ...this.currentTransaction,
+            items: this.editItems,
+            total: this.editItems.reduce((sum, item) => sum + item.subtotal, 0),
+            nama_pelanggan: document.getElementById('edit-nama-pelanggan')?.value || null
+        };
+
+        try {
+            this.showSuccess('Membuat gambar nota...');
+
+            // Create a temporary container for the receipt
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = 'position: fixed; top: 0; left: 0; background: white; padding: 10px; z-index: 9999;';
+            tempContainer.innerHTML = PrintHelper.generateReceiptHTML(transactionData);
+            document.body.appendChild(tempContainer);
+
+            // Wait for content to render
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Get the receipt div inside container
+            const receiptDiv = tempContainer.querySelector('div');
+            if (!receiptDiv) {
+                throw new Error('Receipt content not found');
+            }
+
+            // Calculate pages
+            const maxHeightPerPage = 400;
+            const totalHeight = receiptDiv.offsetHeight;
+            const pages = Math.ceil(totalHeight / maxHeightPerPage);
+
+            // Generate images
+            const images = [];
+            
+            if (pages <= 1 || totalHeight <= maxHeightPerPage) {
+                // Single page
+                const canvas = await html2canvas(receiptDiv, {
+                    scale: 2,
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    useCORS: true,
+                    width: receiptDiv.offsetWidth,
+                    height: receiptDiv.offsetHeight
+                });
+                images.push(canvas.toDataURL('image/jpeg', 0.95));
+            } else {
+                // Multiple pages - create separate canvases for each section
+                for (let i = 0; i < pages; i++) {
+                    const pageHeight = Math.min(maxHeightPerPage, totalHeight - (i * maxHeightPerPage));
+                    const canvas = await html2canvas(receiptDiv, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        useCORS: true,
+                        width: receiptDiv.offsetWidth,
+                        height: totalHeight,
+                        y: i * maxHeightPerPage,
+                        windowHeight: totalHeight
+                    });
+                    
+                    // Crop to page size
+                    const croppedCanvas = document.createElement('canvas');
+                    croppedCanvas.width = canvas.width;
+                    croppedCanvas.height = pageHeight * 2; // scale factor
+                    const ctx = croppedCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0);
+                    
+                    images.push(croppedCanvas.toDataURL('image/jpeg', 0.95));
+                }
+            }
+
+            // Remove temporary container
+            document.body.removeChild(tempContainer);
+
+            // Download images
+            for (let i = 0; i < images.length; i++) {
+                const link = document.createElement('a');
+                link.download = `nota_${transactionData.id}${pages > 1 ? `_hal${i+1}` : ''}.jpg`;
+                link.href = images[i];
+                link.click();
+                
+                if (i < images.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            this.showSuccess(`Nota berhasil diunduh! ${pages > 1 ? `(${pages} halaman)` : ''} Silakan bagikan melalui WhatsApp.`);
+
+        } catch (error) {
+            console.error('Share error:', error);
+            this.showError('Gagal membuat gambar nota: ' + error.message);
+        }
     },
 
     // ==========================================

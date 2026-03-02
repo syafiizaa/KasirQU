@@ -144,9 +144,10 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="flex-wrap: wrap; gap: 0.5rem;">
                 <button class="btn btn-outline" onclick="Riwayat.hideModal()">Tutup</button>
-                <button class="btn btn-outline" onclick="Riwayat.printItemList()">📋 List</button>
+                <button class="btn btn-outline" onclick="Riwayat.showItemListPrintMethod()">📋 List</button>
+                <button class="btn btn-outline" onclick="Riwayat.shareToWhatsApp()">📤 WA</button>
                 <button class="btn btn-primary" onclick="Riwayat.printReceipt()">Cetak Ulang</button>
                 <button class="btn btn-success" onclick="Riwayat.saveEdit()">Simpan & Cetak</button>
             </div>
@@ -267,7 +268,36 @@
         </div>
     </div>
 
+    <!-- Modal: Print List Method Selection -->
+    <div id="modal-print-list-method" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>📋 Cetak List Barang</h3>
+                <button class="modal-close" onclick="Riwayat.hideItemListPrintMethod()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; color: var(--gray-600); margin-bottom: 1rem;">Pilih metode cetak list:</p>
+                <div class="print-method-options">
+                    <button class="btn-print-method" onclick="Riwayat.printItemListHere()">
+                        <span class="icon">🖨️</span>
+                        <span class="label">Cetak di Sini</span>
+                        <span class="desc">Print langsung di perangkat ini</span>
+                    </button>
+                    <button class="btn-print-method btn-print-station" onclick="Riwayat.sendItemListToPrintStation()">
+                        <span class="icon">📤</span>
+                        <span class="label">Kirim ke Print Station</span>
+                        <span class="desc">Cetak di Mini PC / komputer toko</span>
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="Riwayat.hideItemListPrintMethod()">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="js/api.js"></script>
     <script src="js/print.js"></script>
     <script src="js/riwayat.js"></script>

@@ -806,33 +806,31 @@ const Kasir = {
         this.showLoading(true);
 
         try {
-            // Generate receipt HTML
-            const receiptArea = document.getElementById('receipt-area');
-            receiptArea.innerHTML = PrintHelper.generateReceiptHTML(this.lastTransaction);
-            receiptArea.style.display = 'block';
-            receiptArea.style.position = 'fixed';
-            receiptArea.style.left = '-9999px';
-            receiptArea.style.background = 'white';
-            receiptArea.style.padding = '10px';
-
-            // Wait for content to render
-            await new Promise(resolve => setTimeout(resolve, 100));
+            this.showSuccess('Membuat gambar nota...');
 
             // Check if html2canvas is loaded
             if (typeof html2canvas === 'undefined') {
-                // Load html2canvas dynamically
                 await this.loadHtml2Canvas();
             }
 
-            // Get the receipt container
-            const receiptContent = receiptArea.querySelector('div');
-            if (!receiptContent) {
+            // Create a temporary VISIBLE container for the receipt
+            const tempContainer = document.createElement('div');
+            tempContainer.style.cssText = 'position: fixed; top: 0; left: 0; background: white; padding: 10px; z-index: 9999;';
+            tempContainer.innerHTML = PrintHelper.generateReceiptHTML(this.lastTransaction);
+            document.body.appendChild(tempContainer);
+
+            // Wait for content to render
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            // Get the receipt div inside container
+            const receiptDiv = tempContainer.querySelector('div');
+            if (!receiptDiv) {
                 throw new Error('Receipt content not found');
             }
 
             // Calculate max height per page (58mm width, ~80mm per page for readability)
             const maxHeightPerPage = 400; // pixels
-            const totalHeight = receiptContent.offsetHeight;
+            const totalHeight = receiptDiv.offsetHeight;
             const pages = Math.ceil(totalHeight / maxHeightPerPage);
 
             // Generate images
@@ -840,31 +838,43 @@ const Kasir = {
             
             if (pages <= 1 || totalHeight <= maxHeightPerPage) {
                 // Single page - capture entire receipt
-                const canvas = await html2canvas(receiptContent, {
+                const canvas = await html2canvas(receiptDiv, {
                     scale: 2,
                     backgroundColor: '#ffffff',
                     logging: false,
-                    useCORS: true
+                    useCORS: true,
+                    width: receiptDiv.offsetWidth,
+                    height: receiptDiv.offsetHeight
                 });
-                images.push(canvas.toDataURL('image/jpeg', 0.9));
+                images.push(canvas.toDataURL('image/jpeg', 0.95));
             } else {
-                // Multiple pages - capture in sections
+                // Multiple pages - create separate canvases for each section
                 for (let i = 0; i < pages; i++) {
-                    const canvas = await html2canvas(receiptContent, {
+                    const pageHeight = Math.min(maxHeightPerPage, totalHeight - (i * maxHeightPerPage));
+                    const canvas = await html2canvas(receiptDiv, {
                         scale: 2,
                         backgroundColor: '#ffffff',
                         logging: false,
                         useCORS: true,
+                        width: receiptDiv.offsetWidth,
+                        height: totalHeight,
                         y: i * maxHeightPerPage,
-                        height: Math.min(maxHeightPerPage, totalHeight - (i * maxHeightPerPage)),
-                        windowHeight: maxHeightPerPage
+                        windowHeight: totalHeight
                     });
-                    images.push(canvas.toDataURL('image/jpeg', 0.9));
+                    
+                    // Crop to page size
+                    const croppedCanvas = document.createElement('canvas');
+                    croppedCanvas.width = canvas.width;
+                    croppedCanvas.height = pageHeight * 2; // scale factor
+                    const ctx = croppedCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, 0);
+                    
+                    images.push(croppedCanvas.toDataURL('image/jpeg', 0.95));
                 }
             }
 
-            // Hide receipt area
-            receiptArea.style.display = 'none';
+            // Remove temporary container
+            document.body.removeChild(tempContainer);
 
             // Download images
             for (let i = 0; i < images.length; i++) {
