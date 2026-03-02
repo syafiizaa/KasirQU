@@ -187,6 +187,12 @@ header h1 {
     display: none;
 }
 
+/* When shown via JS, ensure flex display */
+#tab-kategori.barang-tab-content[style*="display: block"],
+#tab-kategori.barang-tab-content[style*="display:block"] {
+    display: flex !important;
+}
+
 .barang-tab-fixed {
     flex-shrink: 0;
     background: var(--white);
