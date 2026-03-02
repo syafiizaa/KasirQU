@@ -699,7 +699,8 @@ const Riwayat = {
             this.showSuccess('List barang dikirim ke Print Station!');
         } catch (error) {
             console.error('Error sending to print queue:', error);
-            this.showError('Gagal mengirim ke Print Station: ' + error.message);
+            const errorMsg = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+            this.showError('Gagal mengirim ke Print Station: ' + errorMsg);
         }
     },
 

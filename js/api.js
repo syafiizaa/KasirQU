@@ -45,7 +45,12 @@ const API = {
             
             if (!response.ok) {
                 const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || `HTTP Error: ${response.status}`);
+                // Handle FastAPI validation errors (422)
+                if (error.detail && Array.isArray(error.detail)) {
+                    const messages = error.detail.map(e => e.msg || e.message || JSON.stringify(e)).join(', ');
+                    throw new Error(messages || `Validation Error: ${response.status}`);
+                }
+                throw new Error(error.detail || error.message || `HTTP Error: ${response.status}`);
             }
             
             return await response.json();
