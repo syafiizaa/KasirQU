@@ -872,6 +872,71 @@ header h1 {
 }
 
 /* ============================================
+   CATEGORY CHIPS (Horizontal Scrollable)
+   ============================================ */
+
+.category-chips-container {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    flex: 1;
+    min-width: 0;
+}
+
+.category-chips-container::-webkit-scrollbar {
+    height: 4px;
+}
+
+.category-chips-container::-webkit-scrollbar-track {
+    background: var(--gray-200);
+    border-radius: 2px;
+}
+
+.category-chips-container::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: 2px;
+}
+
+.category-chip {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    background: var(--white);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gray-700);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.category-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.category-chip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+@media (max-width: 768px) {
+    .category-chips-container {
+        padding: 0.25rem 0;
+    }
+    
+    .category-chip {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.8rem;
+    }
+}
+
+/* ============================================
    VARIANT SELECTION STYLES
    ============================================ */
 
@@ -1481,14 +1546,16 @@ tr:hover td {
     gap: 1rem;
     margin-bottom: 1rem;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .filter-row select,
-.filter-row input {
+.filter-row input[type="text"] {
     padding: 0.5rem 1rem;
     border: 1px solid var(--gray-300);
     border-radius: 6px;
     font-size: 0.9rem;
+    min-width: 150px;
 }
 
 .filter-grid {

@@ -795,67 +795,26 @@ const Riwayat = {
                 throw new Error('Receipt content not found');
             }
 
-            // Calculate pages
-            const maxHeightPerPage = 400;
-            const totalHeight = receiptDiv.offsetHeight;
-            const pages = Math.ceil(totalHeight / maxHeightPerPage);
-
-            // Generate images
-            const images = [];
-            
-            if (pages <= 1 || totalHeight <= maxHeightPerPage) {
-                // Single page
-                const canvas = await html2canvas(receiptDiv, {
-                    scale: 2,
-                    backgroundColor: '#ffffff',
-                    logging: false,
-                    useCORS: true,
-                    width: receiptDiv.offsetWidth,
-                    height: receiptDiv.offsetHeight
-                });
-                images.push(canvas.toDataURL('image/jpeg', 0.95));
-            } else {
-                // Multiple pages - create separate canvases for each section
-                for (let i = 0; i < pages; i++) {
-                    const pageHeight = Math.min(maxHeightPerPage, totalHeight - (i * maxHeightPerPage));
-                    const canvas = await html2canvas(receiptDiv, {
-                        scale: 2,
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                        useCORS: true,
-                        width: receiptDiv.offsetWidth,
-                        height: totalHeight,
-                        y: i * maxHeightPerPage,
-                        windowHeight: totalHeight
-                    });
-                    
-                    // Crop to page size
-                    const croppedCanvas = document.createElement('canvas');
-                    croppedCanvas.width = canvas.width;
-                    croppedCanvas.height = pageHeight * 2; // scale factor
-                    const ctx = croppedCanvas.getContext('2d');
-                    ctx.drawImage(canvas, 0, 0);
-                    
-                    images.push(croppedCanvas.toDataURL('image/jpeg', 0.95));
-                }
-            }
+            // Capture full receipt as single high-resolution image (scale 4 for ~1080p quality)
+            const canvas = await html2canvas(receiptDiv, {
+                scale: 4,
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true,
+                width: receiptDiv.offsetWidth,
+                height: receiptDiv.offsetHeight
+            });
 
             // Remove temporary container
             document.body.removeChild(tempContainer);
 
-            // Download images
-            for (let i = 0; i < images.length; i++) {
-                const link = document.createElement('a');
-                link.download = `nota_${transactionData.id}${pages > 1 ? `_hal${i+1}` : ''}.jpg`;
-                link.href = images[i];
-                link.click();
-                
-                if (i < images.length - 1) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
-            }
+            // Download image
+            const link = document.createElement('a');
+            link.download = `nota_${transactionData.id}.jpg`;
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
 
-            this.showSuccess(`Nota berhasil diunduh! ${pages > 1 ? `(${pages} halaman)` : ''} Silakan bagikan melalui WhatsApp.`);
+            this.showSuccess('Nota berhasil diunduh! Silakan bagikan melalui WhatsApp.');
 
         } catch (error) {
             console.error('Share error:', error);

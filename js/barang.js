@@ -75,16 +75,17 @@ const Barang = {
     },
 
     renderKategoriDropdowns() {
-        // Filter dropdown
-        const filterSelect = document.getElementById('filter-kategori');
-        if (filterSelect) {
-            filterSelect.innerHTML = '<option value="">Semua Kategori</option>';
+        // Category chips for filter
+        const chipsContainer = document.getElementById('category-chips');
+        if (chipsContainer) {
+            let chipsHtml = '<button class="category-chip active" data-id="" onclick="Barang.filterByKategori(\'\')">Semua</button>';
             this.categories.forEach(cat => {
-                filterSelect.innerHTML += `<option value="${cat.id}">${cat.nama}</option>`;
+                chipsHtml += `<button class="category-chip" data-id="${cat.id}" onclick="Barang.filterByKategori('${cat.id}')">${cat.nama}</button>`;
             });
+            chipsContainer.innerHTML = chipsHtml;
         }
 
-        // Form dropdown
+        // Form dropdown (keep as select for modal)
         const formSelect = document.getElementById('barang-kategori');
         if (formSelect) {
             formSelect.innerHTML = '<option value="">Pilih Kategori</option>';
@@ -92,6 +93,22 @@ const Barang = {
                 formSelect.innerHTML += `<option value="${cat.id}">${cat.nama}</option>`;
             });
         }
+    },
+
+    selectedKategori: '',
+
+    filterByKategori(kategoriId) {
+        this.selectedKategori = kategoriId;
+        
+        // Update active chip
+        document.querySelectorAll('.category-chip').forEach(chip => {
+            chip.classList.remove('active');
+            if (chip.dataset.id === kategoriId) {
+                chip.classList.add('active');
+            }
+        });
+        
+        this.loadBarang();
     },
 
     showAddKategori() {
@@ -156,7 +173,7 @@ const Barang = {
     // ==========================================
 
     async loadBarang() {
-        const kategoriId = document.getElementById('filter-kategori')?.value || null;
+        const kategoriId = this.selectedKategori || null;
         
         try {
             // Load products with variants

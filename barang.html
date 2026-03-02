@@ -45,9 +45,10 @@
                 </div>
                 <!-- Filter -->
                 <div class="filter-row">
-                    <select id="filter-kategori" onchange="Barang.loadBarang()">
-                        <option value="">Semua Kategori</option>
-                    </select>
+                    <div class="category-chips-container" id="category-chips">
+                        <button class="category-chip active" data-id="" onclick="Barang.filterByKategori('')">Semua</button>
+                        <!-- Category chips will be rendered by JS -->
+                    </div>
                     <input type="text" id="search-barang" placeholder="Cari barang..." oninput="Barang.filterBarang()">
                 </div>
             </div>
