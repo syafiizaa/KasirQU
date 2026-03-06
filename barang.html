@@ -117,7 +117,10 @@
                 <input type="hidden" id="barang-id">
                 <div class="input-group">
                     <label>Kode Barang</label>
-                    <input type="text" id="barang-kode" placeholder="Contoh: BRG001">
+                    <div class="input-with-btn">
+                        <input type="text" id="barang-kode" placeholder="Contoh: BRG001">
+                        <button type="button" class="btn btn-outline btn-sm" onclick="Barang.generateKode()">Auto</button>
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Nama Barang</label>

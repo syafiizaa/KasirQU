@@ -358,6 +358,15 @@ const Barang = {
         document.getElementById('modal-barang').style.display = 'flex';
     },
 
+    async generateKode() {
+        try {
+            const result = await API.generateKodeBarang();
+            document.getElementById('barang-kode').value = result.kode;
+        } catch (error) {
+            this.showError('Gagal generate kode: ' + error.message);
+        }
+    },
+
     editBarang(id) {
         const barang = this.products.find(b => b.id === id);
         if (!barang) return;

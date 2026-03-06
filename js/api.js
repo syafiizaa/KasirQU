@@ -95,6 +95,10 @@ const API = {
         });
     },
 
+    async generateKodeBarang() {
+        return await this.request('/api/barang/generate-kode');
+    },
+
     // ==========================================
     // Varian (Product Variant) Endpoints
     // ==========================================
