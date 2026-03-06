@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kasir POS - Log Aktivitas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container activity-log-container">
+        <!-- Fixed Header Section -->
+        <div class="activity-log-header">
+            <!-- Header -->
+            <header>
+                <div class="header-row">
+                    <a href="index.html" class="btn-back">← Home</a>
+                    <h1>LOG AKTIVITAS</h1>
+                    <button class="btn btn-danger btn-sm" onclick="ActivityLog.confirmClearAll()">🗑️ Hapus Semua</button>
+                </div>
+            </header>
+
+            <!-- Alert Container -->
+            <div id="alert-container"></div>
+
+            <!-- Stats -->
+            <div class="activity-stats">
+                <div class="stat-card">
+                    <span class="stat-value" id="stat-total">0</span>
+                    <span class="stat-label">Total Log</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="stat-today">0</span>
+                    <span class="stat-label">Hari Ini</span>
+                </div>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips-container">
+                <button class="filter-chip active" data-type="" onclick="ActivityLog.filterByType('')">Semua</button>
+                <button class="filter-chip" data-type="TRANSAKSI" onclick="ActivityLog.filterByType('TRANSAKSI')">🧾 Transaksi</button>
+                <button class="filter-chip" data-type="BARANG" onclick="ActivityLog.filterByType('BARANG')">📦 Barang</button>
+                <button class="filter-chip" data-type="VARIAN" onclick="ActivityLog.filterByType('VARIAN')">🏷️ Varian</button>
+                <button class="filter-chip" data-type="KATEGORI" onclick="ActivityLog.filterByType('KATEGORI')">📁 Kategori</button>
+                <button class="filter-chip" data-type="ORDER" onclick="ActivityLog.filterByType('ORDER')">📋 Order</button>
+                <button class="filter-chip" data-type="PENGATURAN" onclick="ActivityLog.filterByType('PENGATURAN')">⚙️ Pengaturan</button>
+                <button class="filter-chip" data-type="BACKUP" onclick="ActivityLog.filterByType('BACKUP')">💾 Backup</button>
+            </div>
+        </div>
+
+        <!-- Scrollable Log List -->
+        <div class="activity-log-content">
+            <div id="log-list" class="log-list">
+                <div class="loading">Memuat log aktivitas...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Clear Modal -->
+    <div id="modal-confirm-clear" class="modal" style="display: none;">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h3>⚠️ Konfirmasi Hapus</h3>
+                <button class="modal-close" onclick="ActivityLog.hideConfirmModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; margin-bottom: 1rem;">
+                    Apakah Anda yakin ingin menghapus <strong>SEMUA</strong> log aktivitas?
+                </p>
+                <p style="text-align: center; color: var(--danger); font-size: 0.9rem;">
+                    Tindakan ini tidak dapat dibatalkan!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="ActivityLog.hideConfirmModal()">Batal</button>
+                <button class="btn btn-danger" onclick="ActivityLog.clearAllLogs()">Ya, Hapus Semua</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/activity-log.js"></script>
+</body>
+</html>

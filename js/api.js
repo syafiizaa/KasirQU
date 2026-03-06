@@ -351,6 +351,34 @@ const API = {
     },
 
     // ==========================================
+    // Activity Log Endpoints
+    // ==========================================
+
+    async getActivityLogs(limit = 100, type = null) {
+        let query = `?limit=${limit}`;
+        if (type) {
+            query += `&type=${type}`;
+        }
+        return await this.request(`/api/settings/activity-log${query}`);
+    },
+
+    async getActivityLogStats() {
+        return await this.request('/api/settings/activity-log/stats');
+    },
+
+    async clearActivityLogs() {
+        return await this.request('/api/settings/activity-log', {
+            method: 'DELETE',
+        });
+    },
+
+    async deleteOldActivityLogs(days = 30) {
+        return await this.request(`/api/settings/activity-log/old?days=${days}`, {
+            method: 'DELETE',
+        });
+    },
+
+    // ==========================================
     // Utility Methods
     // ==========================================
 

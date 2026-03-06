@@ -1334,6 +1334,9 @@ header h1 {
 .menu-pengaturan:hover { border-color: var(--gray-500); }
 .menu-print:hover { border-color: #8b5cf6; }
 
+.menu-activity { border-color: #06b6d4; }
+.menu-activity:hover { border-color: #0891b2; }
+
 .home-status {
     margin-top: 2rem;
     text-align: center;
@@ -1932,4 +1935,292 @@ hr {
 
 .btn-print-method.btn-print-station:hover {
     background: rgba(59, 130, 246, 0.1);
+}
+
+/* ============================================
+   Activity Log Page
+   ============================================ */
+
+.activity-log-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    max-width: 100%;
+}
+
+.activity-log-header {
+    flex-shrink: 0;
+    padding: 1rem;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.activity-log-header header {
+    margin-bottom: 1rem;
+}
+
+.activity-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card {
+    flex: 1;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: var(--white);
+    padding: 1rem;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+}
+
+.stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.stat-label {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.filter-chips-container {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.filter-chip {
+    flex-shrink: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: 20px;
+    background: var(--white);
+    cursor: pointer;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.filter-chip:hover {
+    border-color: var(--primary);
+}
+
+.filter-chip.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--white);
+}
+
+.activity-log-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.log-date-group {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.log-date-header {
+    background: var(--gray-100);
+    padding: 0.75rem 1rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky;
+    top: 0;
+}
+
+.log-items {
+    display: flex;
+    flex-direction: column;
+}
+
+.log-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--gray-100);
+    transition: background 0.2s;
+}
+
+.log-item:last-child {
+    border-bottom: none;
+}
+
+.log-item:hover {
+    background: var(--gray-50);
+}
+
+.log-icon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: var(--gray-100);
+    border-radius: 10px;
+}
+
+.log-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.log-description {
+    font-size: 0.95rem;
+    color: var(--gray-800);
+    word-break: break-word;
+}
+
+.log-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+}
+
+.log-time {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+.log-type-badge {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.log-type-badge.transaksi {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+}
+
+.log-type-badge.barang {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+}
+
+.log-type-badge.varian {
+    background: rgba(168, 85, 247, 0.1);
+    color: #9333ea;
+}
+
+.log-type-badge.kategori {
+    background: rgba(245, 158, 11, 0.1);
+    color: #d97706;
+}
+
+.log-type-badge.order {
+    background: rgba(236, 72, 153, 0.1);
+    color: #db2777;
+}
+
+.log-type-badge.pengaturan {
+    background: rgba(107, 114, 128, 0.1);
+    color: #4b5563;
+}
+
+.log-type-badge.backup {
+    background: rgba(6, 182, 212, 0.1);
+    color: #0891b2;
+}
+
+/* Log item type-specific icon backgrounds */
+.log-item.transaksi .log-icon {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.log-item.barang .log-icon {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.log-item.varian .log-icon {
+    background: rgba(168, 85, 247, 0.1);
+}
+
+.log-item.kategori .log-icon {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.log-item.order .log-icon {
+    background: rgba(236, 72, 153, 0.1);
+}
+
+.log-item.pengaturan .log-icon {
+    background: rgba(107, 114, 128, 0.1);
+}
+
+.log-item.backup .log-icon {
+    background: rgba(6, 182, 212, 0.1);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--gray-500);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+/* Small button variant */
+.btn-sm {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .activity-stats {
+        gap: 0.5rem;
+    }
+    
+    .stat-card {
+        padding: 0.75rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+    }
+    
+    .log-item {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .log-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.25rem;
+    }
 }

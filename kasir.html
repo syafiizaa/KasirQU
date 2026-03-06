@@ -17,7 +17,7 @@
                     <h1>KASIR</h1>
                     <div class="header-actions">
                         <button id="btn-hold-list" class="btn btn-outline" onclick="Kasir.showHoldOrders()">
-                            Tersimpan (<span id="hold-count">0</span>)
+                            Hold (<span id="hold-count">0</span>)
                         </button>
                     </div>
                 </div>
@@ -105,16 +105,16 @@
                 <!-- Action Buttons -->
                 <div class="btn-group">
                     <button id="btn-hold" class="btn btn-outline" onclick="Kasir.holdOrder()">
-                        Simpan
+                        Hold
                     </button>
                     <button id="btn-print-list" class="btn btn-outline" onclick="Kasir.printItemList()">
                         📋 List
                     </button>
                     <button id="btn-clear" class="btn btn-danger" onclick="Kasir.clearCart()">
-                        Hapus
+                        Batal
                     </button>
                     <button id="btn-bayar" class="btn btn-success btn-block" onclick="Kasir.processPayment()">
-                        Cetak
+                        LUNAS & Cetak
                     </button>
                 </div>
             </div>
@@ -376,5 +376,3 @@
     <script src="js/kasir.js"></script>
 </body>
 </html>
-
-
